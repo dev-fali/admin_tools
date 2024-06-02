@@ -1,23 +1,12 @@
 import os
 import platform
 import subprocess
-
-def is_root():
-    if platform.system() in ["Linux", "Darwin"]:
-        return os.geteuid() == 0
-    elif platform.system() == "Windows":
-        try:
-            # Check for administrative privileges on Windows
-            import ctypes
-            return ctypes.windll.shell32.IsUserAnAdmin() != 0
-        except ImportError:
-            return False
-    return False
+from admin_check import is_user_admin  
 
 def add_user(username):
     system = platform.system()
     try:
-        if system == "Linux" or system == "Darwin":  # Darwin is for macOS
+        if system == "Linux" or system == "Darwin":  # Darwin : macOS
             subprocess.run(["sudo", "useradd", username], check=True)
             print(f"User {username} added successfully.")
         elif system == "Windows":
@@ -54,8 +43,37 @@ def list_users():
     except subprocess.CalledProcessError as e:
         print(f"Error listing users: {e}")
 
+def change_password(username):
+    system = platform.system()
+    try:
+        if system == "Linux" or system == "Darwin":
+            subprocess.run(["sudo", "passwd", username], check=True)
+            print(f"Password for user {username} changed successfully.")
+        elif system == "Windows":
+            new_password = input("Enter the new password: ")
+            subprocess.run(["net", "user", username, new_password], check=True)
+            print(f"Password for user {username} changed successfully.")
+        else:
+            print(f"Unsupported operating system: {system}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error changing password for user {username}: {e}")
+
+def change_user_group(username, group):
+    system = platform.system()
+    try:
+        if system == "Linux" or system == "Darwin":
+            subprocess.run(["sudo", "usermod", "-aG", group, username], check=True)
+            print(f"User {username} added to group {group} successfully.")
+        elif system == "Windows":
+            subprocess.run(["net", "localgroup", group, username, "/add"], check=True)
+            print(f"User {username} added to group {group} successfully.")
+        else:
+            print(f"Unsupported operating system: {system}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error changing group for user {username}: {e}")
+
 def main():
-    if not is_root():
+    if not is_user_admin():
         print("This script must be run with administrative privileges.")
         return
 
@@ -64,7 +82,9 @@ def main():
         print("1. Add User")
         print("2. Delete User")
         print("3. List Users")
-        print("4. Exit")
+        print("4. Change User Password")
+        print("5. Change User Group")
+        print("6. Exit")
         choice = input("Enter your choice: ")
         
         if choice == '1':
@@ -76,6 +96,13 @@ def main():
         elif choice == '3':
             list_users()
         elif choice == '4':
+            username = input("Enter the username to change password: ")
+            change_password(username)
+        elif choice == '5':
+            username = input("Enter the username to change group: ")
+            group = input("Enter the group to add the user to: ")
+            change_user_group(username, group)
+        elif choice == '6':
             break
         else:
             print("Invalid choice. Please try again.")
