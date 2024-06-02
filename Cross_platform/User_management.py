@@ -2,6 +2,18 @@ import os
 import platform
 import subprocess
 
+def is_root():
+    if platform.system() in ["Linux", "Darwin"]:
+        return os.geteuid() == 0
+    elif platform.system() == "Windows":
+        try:
+            # Check for administrative privileges on Windows
+            import ctypes
+            return ctypes.windll.shell32.IsUserAnAdmin() != 0
+        except ImportError:
+            return False
+    return False
+
 def add_user(username):
     system = platform.system()
     try:
@@ -43,6 +55,10 @@ def list_users():
         print(f"Error listing users: {e}")
 
 def main():
+    if not is_root():
+        print("This script must be run with administrative privileges.")
+        return
+
     while True:
         print("User Management Script")
         print("1. Add User")
