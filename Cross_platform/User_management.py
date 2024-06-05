@@ -3,6 +3,27 @@ import platform
 import subprocess
 from admin_check import is_user_admin  
 
+def is_user_exist(username):
+  system = platform.system()
+  try:
+    if system == "Linux" or system == "Darwin":
+      result = subprocess.run(["grep", username, "/etc/passwd"], capture_output=True, check=True)
+      return len(result.stdout) > 0
+    elif system == "Windows":
+      result = subprocess.run(["net", "user", username], capture_output=True, check=True)
+      return "user account does not exist" not in result.stdout.decode()
+    else:
+      print(f"Unsupported operating system: {system}")
+      return False
+  except subprocess.CalledProcessError:
+    print(f"Error checking user {username}")
+    return False
+
+if not is_user_exist(username):
+  print(f"User {username} does not exist.")
+  return
+
+
 def add_user(username):
     system = platform.system()
     try:
@@ -57,6 +78,29 @@ def change_password(username):
             print(f"Unsupported operating system: {system}")
     except subprocess.CalledProcessError as e:
         print(f"Error changing password for user {username}: {e}")
+
+def is_group_exist(group):
+  system = platform.system()
+  try:
+    if system == "Linux" or system == "Darwin":
+      # Use grep to search for group in /etc/group
+      result = subprocess.run(["grep", group, "/etc/group"], capture_output=True, check=True)
+      return len(result.stdout) > 0
+    elif system == "Windows":
+      # Use net localgroup to query group information
+      result = subprocess.run(["net", "localgroup", group], capture_output=True, check=True)
+      return "The group name is not found" not in result.stdout.decode()
+    else:
+      print(f"Unsupported operating system: {system}")
+      return False
+  except subprocess.CalledProcessError:
+    print(f"Error checking group {group}")
+    return False
+
+if not is_group_exist(group):
+  print(f"Group {group} does not exist.")
+  return
+
 
 def change_user_group(username, group):
     system = platform.system()
