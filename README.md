@@ -6,4 +6,6 @@ This repository contains various scripts for managing users and administrative t
 - [Scripts](#scripts)
 - [Testing](#testing)
 ## Installation
+'''bash
 git clone 
+'''
